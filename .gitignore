@@ -1,0 +1,14 @@
+access.log.5
+*.txt
+*.data
+.idea/
+*.tfstate
+gcp-task-key.json
+*lock.hcl
+.terraform
+key*
+terraform.*
+*.json
+.env
+.DS_Store
+ssh_keys/

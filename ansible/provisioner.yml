@@ -2,5 +2,6 @@
   - hosts: jenkins
     roles: 
       - jenkins
-  - hosts: nexus
+  - hosts: nexus   
+    roles: 
       - nexus

@@ -1,0 +1,10 @@
+#ping.yml
+---
+- name: Check servers
+  hosts: all
+  become: false
+
+  tasks:
+  - name: Ping my server
+    ping:
+

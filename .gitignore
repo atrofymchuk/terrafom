@@ -12,3 +12,6 @@ terraform.*
 .env
 .DS_Store
 ssh_keys/
+gcp_key/
+inventory
+inventory_app

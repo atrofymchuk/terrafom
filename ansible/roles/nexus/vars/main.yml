@@ -1,0 +1,4 @@
+---
+user: 'atrofymchuk'
+group: 'atrofymchuk'
+path_admin_password: '/opt/sonatype-work/nexus3/admin.password'

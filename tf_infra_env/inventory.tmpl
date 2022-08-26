@@ -1,0 +1,20 @@
+[bastion]
+${name_bastion}  ansible_host=${ip_bastion} ansible_ssh_private_key_file=${key_bastion}
+
+[nexus]
+at-infra-nexus  ansible_host=${ip_nexus} ansible_ssh_private_key_file=${key_nexus}
+
+[jenkins]
+at-infra-jenkins  ansible_host=${ip_jenkins} ansible_ssh_private_key_file=${key_jenkins}
+
+[bastion:vars]
+ansible_user=${user_name}
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
+[jenkins:vars]
+ansible_user=${user_name}
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q ${user_name}@${ip_bastion} -i ${key_bastion}"'
+
+[nexus:vars]
+ansible_user=${user_name}
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q ${user_name}@${ip_bastion} -i ${key_bastion}"'

@@ -1,0 +1,89 @@
+---
+  - name: Updating apt packages
+    become: true
+    ansible.builtin.apt: 
+      name: "*"
+      state: latest
+      update_cache: yes
+
+  - name: Install java-8
+    become: true
+    ansible.builtin.apt: 
+      name: openjdk-8-jre-headless
+      state: present
+
+  - name: Download nexus from repository
+    become: true
+    ansible.builtin.get_url: 
+      url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+      dest: /opt/nexus.tar.gz
+      mode: '0644'
+      force_basic_auth: yes
+      force: yes
+      #register: nexus_download
+
+  - name: Extract nexus
+    become: true
+    unarchive:
+      src: /opt/nexus.tar.gz
+      dest: /opt
+      remote_src: yes
+
+  - name: Remove file (delete file)
+    become: true
+    ansible.builtin.file:
+      path: /opt/nexus.tar.gz
+      state: absent
+
+  - name: Move nexus files
+    become: true
+    shell: 'mv /opt/nexus-* /opt/nexus'
+
+  - name: Recursively change ownership of a directory
+    become: true
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      recurse: yes
+      owner: "{{ user }}"
+      group: "{{ group }}"
+    loop:
+      - /opt/nexus
+      - /opt/sonatype-work
+
+  - name: Add a line to a file if the file does not exist
+    ansible.builtin.lineinfile:
+      path: /opt/nexus/bin/nexus.rc
+      line: run_as_user="{{ user }}"
+      create: yes
+
+  - name: Create systemd unit
+    become: true
+    template:
+      src: nexus.service.j2
+      dest: /etc/systemd/system/nexus.service
+
+  - name: Just force systemd to reread configs
+    become: true
+    ansible.builtin.systemd:
+      daemon_reload: yes
+
+  - name: Enable service httpd and ensure it is not masked
+    become: true
+    ansible.builtin.systemd:
+      name: nexus
+      state: started
+      enabled: yes
+
+  - name: Wait for port 8081 to become open on the host, don't start checking for 20 seconds
+    ansible.builtin.wait_for:
+      port: 8081
+      delay: 20
+
+  - name: Read temp password
+    ansible.builtin.command: cat "{{ path_admin_password }}"
+    register: command_output
+
+  - name: output
+    debug:
+      var: command_output.stdout_lines

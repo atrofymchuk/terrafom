@@ -1,0 +1,14 @@
+[bastion]
+${name_bastion}  ansible_host=${ip_bastion} ansible_ssh_private_key_file=${key_bastion}
+
+[app]
+${name_app1}  ansible_host=${ip_app1} ansible_ssh_private_key_file=${key_app}
+${name_app2}  ansible_host=${ip_app2} ansible_ssh_private_key_file=${key_app}
+
+[app:vars]
+ansible_user=${user_name}
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q ${user_name}@${ip_bastion} -i ${key_bastion}"'
+
+[bastion:vars]
+ansible_user=${user_name}
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

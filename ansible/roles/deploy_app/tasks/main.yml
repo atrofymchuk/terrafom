@@ -1,0 +1,100 @@
+---
+  - name: Updating apt packages
+    become: true
+    ansible.builtin.apt: 
+      name: "*"
+      state: latest
+      update_cache: yes
+
+  - name: Install java-1.8
+    become: true
+    ansible.builtin.apt:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - openjdk-8-jdk 
+      - mysql-client
+
+  - name: Create sql script
+    become: true
+    template:
+      src:  "{{ script_name }}"
+      dest: /opt/user.sql
+  
+  - name: Create  database and user for app
+    become: true
+    #ansible.builtin.command:
+      #cmd: 'mysql -u {{login_user_mysql}} -h {{login_host_mysql}} -p{{login_password_mysql}} < /opt/user.sql'
+    shell: 'mysql -u {{login_user_mysql}} -h {{login_host_mysql}} -p{{login_password_mysql}} < /opt/user.sql'
+  
+  - name: Create dir for app
+    become: true
+    ansible.builtin.file:
+      path: "{{ path_app }}"
+      state: directory
+      mode: '0755'
+  
+  - name: Create dir for artifacts
+    become: true
+    ansible.builtin.file:
+      path: "{{ path_artifacts }}"
+      state: directory
+      mode: '0755'
+
+  - name: Get artifact from nexus
+    become: true
+    get_url:
+      url: "{{nexus_repo_url}}/artifact_{{build_number}}.tar.gz"
+      url_username: "{{ nexus_login }}"
+      url_password: "{{ nexus_password }}"
+      dest: "{{ path_artifacts }}/artifact_{{build_number}}.tar.gz"
+  
+  - name: Unarchive artifact
+    become: true
+    ansible.builtin.unarchive:
+      src: "{{ path_artifacts }}/artifact_{{build_number}}.tar.gz"
+      dest: /opt/app
+      remote_src: yes
+
+  - name: Recursively change ownership of a directory
+    become: true
+    ansible.builtin.file:
+      path: "{{ path_app }}"
+      state: directory
+      recurse: yes
+      owner: "{{ user }}"
+      group: "{{ group }}"
+
+  - name: Move app file
+    become: true
+    shell: mv /opt/app/target/*.jar /opt/app/app_{{build_number}}.jar
+
+  - name: Create systemd unit
+    become: true
+    template:
+      src: "{{ template_name }}"
+      dest: /etc/systemd/system/app.service
+
+  - name: Just force systemd to reread configs
+    become: true
+    ansible.builtin.systemd:
+      name: app
+      state: restarted
+      daemon_reload: yes
+  
+  - name: Enable service httpd and ensure it is not masked
+    become: true
+    ansible.builtin.systemd:
+      name: app
+      state: started
+      enabled: yes
+  
+  - name: Remove app file
+    become: true
+    shell: mv /op!(app_{{build_number}}.jar)
+
+  - name: Remove file (delete file)
+    become: true
+    ansible.builtin.file:
+      path: /opt/app/target
+      state: absent

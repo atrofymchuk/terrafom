@@ -1,0 +1,17 @@
+[Unit]
+Description=App Service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+WorkingDirectory={{ path_app }}
+ExecStart=/usr/bin/java -jar -Dspring.profiles.active="{{profile_active}}" -Dspring.datasource.url="jdbc:mysql://{{login_host_mysql}}/{{ mysql_database }}?enabledTLSProtocols=TLSv1.2" -Dspring.datasource.username="{{ mysql_user }}" -Dspring.datasource.password="{{ mysql_user_password }}" -Dspring.datasource.initialization-mode="always" /opt/app/app_{{build_number}}.jar
+ExecStop=/bin/kill -15 $MAINPID
+User={{ user }}
+Group={{ group }}
+Restart=on-failure
+SuccessExitStatus=143
+
+
+[Install]
+WantedBy=multi-user.target

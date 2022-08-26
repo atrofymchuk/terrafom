@@ -1,0 +1,7 @@
+CREATE DATABASE IF NOT EXISTS {{mysql_user}};
+
+ALTER DATABASE {{mysql_database}}
+  DEFAULT CHARACTER SET utf8
+  DEFAULT COLLATE utf8_general_ci;
+
+GRANT ALL PRIVILEGES ON {{mysql_database}}.* TO '{{mysql_user}}'@'%' IDENTIFIED BY '{{mysql_user_password}}';

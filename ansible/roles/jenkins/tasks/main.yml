@@ -1,0 +1,46 @@
+---
+- hosts: jenkins
+  tasks:
+    - name: Install jenkins apt repository key 
+      become: true
+      apt_key: url=https://pkg.jenkins.io/debian/jenkins.io.key 
+      state: present
+
+    - name: Add repository
+      become: true
+      apt_repository: repo='deb https://pkg.jenkins.io/debian-stable binary/' 
+      state: present  
+
+    - name: Updating apt packages
+      become: true
+      ansible.builtin.apt: 
+        name: "*"
+        state: latest
+        update_cache: yes
+
+    - name: Install java-11
+      become: true
+      ansible.builtin.apt: 
+        name: openjdk-11-jdk 
+        state: present
+
+    - name: Install Jenkins
+      become: true
+      ansible.builtin.apt:
+        name: jenkins
+        state: latest
+
+    - name: Start jenkins
+      become: true
+      ansible.builtin.systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: Read temp password
+      become: true
+      ansible.builtin.command: cat "{{ path_admin_password }}"
+      register: command_output
+
+    - debug:
+        var: command_output.stdout_lines
